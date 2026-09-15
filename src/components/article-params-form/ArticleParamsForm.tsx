@@ -56,9 +56,14 @@ export const ArticleParamsForm = ({
 		<>
 			<ArrowButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
 
-			<aside className={isOpen ? styles.container_open : styles.container}>
+			<aside
+				className={`${styles.container} ${
+					isOpen ? styles.container_open : ''
+				}`}>
 				<form className={styles.form} onSubmit={submitForm}>
-					<Text>Задайте параметры</Text>
+					<Text size={31} weight={800} uppercase>
+						Задайте параметры
+					</Text>
 
 					<Select
 						title='Шрифт'
