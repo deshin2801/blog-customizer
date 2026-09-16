@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 
 import styles from './ArticleParamsForm.module.scss';
+import { clsx } from 'clsx';
 
 import {
 	OptionType,
@@ -27,23 +28,41 @@ interface ArticleParamsFormProps {
 export const ArticleParamsForm = ({
 	setArticleStyleState,
 }: ArticleParamsFormProps) => {
-	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 	const [inputArticleStyleState, setInputArticleStyleState] =
 		useState<ArticleStateType>(defaultArticleState);
+
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!isMenuOpen) return;
+
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				containerRef.current &&
+				!containerRef.current.contains(e.target as Node)
+			) {
+				setIsMenuOpen(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, [isMenuOpen]);
 
 	const submitForm = (evt: React.FormEvent<HTMLFormElement>) => {
 		evt.preventDefault();
 		setArticleStyleState(inputArticleStyleState);
-		setIsOpen(false);
+		setIsMenuOpen(false);
 	};
 
 	const resetForm = () => {
 		setInputArticleStyleState(defaultArticleState);
 		setArticleStyleState(defaultArticleState);
-		setIsOpen(false);
+		setIsMenuOpen(false);
 	};
 
-	const onOptionSelected =
+	const setOption =
 		(optionName: keyof ArticleStateType) =>
 		(selected: OptionType): void => {
 			setInputArticleStyleState((prev) => ({
@@ -53,13 +72,16 @@ export const ArticleParamsForm = ({
 		};
 
 	return (
-		<>
-			<ArrowButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
+		<div ref={containerRef}>
+			<ArrowButton
+				isOpen={isMenuOpen}
+				onClick={() => setIsMenuOpen(!isMenuOpen)}
+			/>
 
 			<aside
-				className={`${styles.container} ${
-					isOpen ? styles.container_open : ''
-				}`}>
+				className={clsx(styles.container, {
+					[styles.container_open]: isMenuOpen,
+				})}>
 				<form className={styles.form} onSubmit={submitForm}>
 					<Text size={31} weight={800} uppercase>
 						Задайте параметры
@@ -69,15 +91,14 @@ export const ArticleParamsForm = ({
 						title='Шрифт'
 						options={fontFamilyOptions}
 						selected={inputArticleStyleState.fontFamilyOption}
-						onChange={onOptionSelected('fontFamilyOption')}
+						onChange={setOption('fontFamilyOption')}
 					/>
 
 					<RadioGroup
 						name='fontSize'
 						options={fontSizeOptions}
 						selected={inputArticleStyleState.fontSizeOption}
-						onChange={onOptionSelected('fontSizeOption')}
-						key='font-size-group'
+						onChange={setOption('fontSizeOption')}
 						title='Размер шрифта'
 					/>
 
@@ -85,7 +106,7 @@ export const ArticleParamsForm = ({
 						title='Цвет шрифта'
 						options={fontColors}
 						selected={inputArticleStyleState.fontColor}
-						onChange={onOptionSelected('fontColor')}
+						onChange={setOption('fontColor')}
 					/>
 
 					<Separator />
@@ -94,22 +115,27 @@ export const ArticleParamsForm = ({
 						title='Цвет фона'
 						options={backgroundColors}
 						selected={inputArticleStyleState.backgroundColor}
-						onChange={onOptionSelected('backgroundColor')}
+						onChange={setOption('backgroundColor')}
 					/>
 
 					<Select
 						title='Ширина контента'
 						options={contentWidthArr}
 						selected={inputArticleStyleState.contentWidth}
-						onChange={onOptionSelected('contentWidth')}
+						onChange={setOption('contentWidth')}
 					/>
 
 					<div className={styles.bottomContainer}>
-						<Button title='Сбросить' type='clear' onClick={resetForm} />
+						<Button
+							title='Сбросить'
+							type='clear'
+							onClick={resetForm}
+							htmlType='reset'
+						/>
 						<Button title='Применить' htmlType='submit' type='apply' />
 					</div>
 				</form>
 			</aside>
-		</>
+		</div>
 	);
 };
